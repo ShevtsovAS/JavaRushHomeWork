@@ -1,9 +1,6 @@
 package com.javarush.test.level20.lesson10.bonus01;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /* Алгоритмы-числа
 Число S состоит из M чисел, например, S=370 и M(количество цифр)=3
@@ -20,21 +17,19 @@ getNumbers должен возвращать все такие числа в п�
 */
 public class Solution {
     public static void main(String[] args) {
-        long memoryStart = Runtime.getRuntime().freeMemory();
+        long freeMemory = Runtime.getRuntime().freeMemory();
         long startTime = System.currentTimeMillis();
-        int[] armstrongs = getNumbers(100000000);
+        int[] armstrongs = getNumbers(Integer.MAX_VALUE);
         long memoryEnd = Runtime.getRuntime().freeMemory();
-        long memoTaken = (memoryStart - memoryEnd)/1024/1024;
+        long delta = (memoryEnd - freeMemory)/1024/1024;
         long stopTime = System.currentTimeMillis();
         for (int armstrong : armstrongs) System.out.print(armstrong + " ");
         System.out.println();
-        System.out.println("Calculating time: " + (stopTime - startTime)/1000d + " sec");
-        System.out.println("Used JVM memory: " + memoTaken);
-
+        System.out.println("Calculating time: " + (stopTime - startTime)/1000);
+        System.out.println("Used JVM memory: " + delta);
     }
     public static int[] getNumbers(int N) {
-        int[] result = null;
-
+        int[] result;
         // Заполняем таблицу степеней
         long[][] SQRT = new long[10][11];
         for (int i = 1; i <= 9; i++) {

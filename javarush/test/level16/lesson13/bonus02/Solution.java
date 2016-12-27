@@ -21,95 +21,70 @@ import java.util.List;
 public class Solution {
     public static List<Thread> threads = new ArrayList<>(5);
     static {
-        threads.add(new ThreadOne());
-        threads.add(new ThreadTwo());
-        threads.add(new ThreadThree());
-        threads.add(new ThreadFour());
-        threads.add(new ThreadFive());
+        threads.add(new Thread1());
+        threads.add(new Thread2());
+        threads.add(new Thread3());
+        threads.add(new Thread4());
+        threads.add(new Thread5());
     }
 
-/*
-    public static void main(String[] args) throws InterruptedException {
-        threads.get(0).start();
-        threads.get(1).start();
-        threads.get(1).interrupt();
-        threads.get(2).start();
-        Thread.sleep(5000);
-        threads.get(2).interrupt();
-        System.out.println("Ждём завершения Ура...");
-        threads.get(2).join();
-        threads.get(3).start();
-        Message message = (Message) threads.get(3);
-        message.showWarning();
-        if (threads.get(3).isAlive()) {
-            System.out.println("Ждём завершения...");
-            threads.get(3).join();
-        }
-        threads.get(4).start();
+    public static class Thread1 extends Thread {
+        public void run() { while (true); }
     }
-*/
-    public static class ThreadOne extends Thread {
-        @Override
-        public void run() {
-            while (true){}
-        }
-    }
-    public static class ThreadTwo extends Thread {
-        @Override
-        public void run() {
-            while (true) {
-                try {
-                    sleep(100);
-                } catch (InterruptedException e) {
-                    System.out.println("InterruptedException");
-                }
-            }
-        }
-    }
-    public static class ThreadThree extends Thread {
-        @Override
-        public void run() {
-            while (true) {
-                try {
-                    System.out.println("Ура");
-                    sleep(500);
-                } catch (InterruptedException e) {
-                }
-            }
-        }
-    }
-    public static class ThreadFour extends Thread implements Message{
-        @Override
-        public void run() {
-            while (!isInterrupted()) {
-                try {
-                    sleep(100);
-                } catch (InterruptedException e) {
-                }
-            }
-        }
 
-        @Override
-        public void showWarning() throws InterruptedException {
-            interrupt();
+    public static class Thread2 extends Thread {
+        public void run() {
+            while (!isInterrupted()) {}
+            System.out.println("InterruptedException");
         }
     }
-    public static class ThreadFive extends Thread {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        String s = "";
-        int sum = 0;
-        @Override
-        public void run() {
+
+    public static class Thread3 extends Thread {
+        public void run()
+        {
             try {
-                while ((s = reader.readLine()).equals("N")) {
-                    sum += Integer.parseInt(s);
+                while (true) {
+                    System.out.println("Ура");
+                    Thread.sleep(500);
                 }
-            } catch (IOException e) {
-                System.out.println(e);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+    public static class Thread4 extends Thread implements Message {
+        public void run() {
+            while (!Thread.currentThread().isInterrupted()){}
+        }
+        public void showWarning() {
+            this.interrupt();
+            try
+            {
+                this.join();
+            }
+            catch (InterruptedException ex)
+            {
+                ex.printStackTrace();
+            }
+        }
+    }
+    public static class Thread5 extends Thread {
+        public void run()
+        {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            int sum = 0;
+            try
+            {
+                String input = reader.readLine();
+                while (!input.equals("N")) {
+                    sum += Integer.parseInt(input);
+                    input = reader.readLine();
+                }
+                reader.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
             System.out.println(sum);
         }
     }
 }
-
-

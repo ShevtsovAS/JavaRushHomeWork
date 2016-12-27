@@ -26,55 +26,43 @@ text2>text1</tag>
 text1, text2 могут быть пустыми
 */
 
-
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.io.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Solution {
     public static void main(String[] args) throws IOException {
-        String[] myArgs = "span".trim().split("\\s+");
-        args = myArgs;
+//        String[] myArgs = "span".trim().split("\\s+");
+//        args = myArgs;
 
-        if (args.length == 0) {
-            System.out.println("Не указан тэг для поиска!");
+        if (args.length < 1) {
+            System.out.println("Не указан параметр имя тэга");
             System.exit(1);
         }
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        BufferedReader file = new BufferedReader(new FileReader(reader.readLine()));
+        BufferedReader reader = new BufferedReader(new FileReader(new BufferedReader(new InputStreamReader(System.in)).readLine()));
+        String text = "";
+        String line;
+        while ((line = reader.readLine()) != null) text += line;
         reader.close();
 
-        String textFromFile = "";
-        String line;
-        while ((line = file.readLine()) != null) textFromFile += line;
+        String tagName = args[0];
+        Pattern pattern = Pattern.compile("<" + tagName + ".*?>|</" + tagName + ">");
+        Matcher tag1 = pattern.matcher(text);
 
-        ArrayList<String> tags = new ArrayList<>();
-
-        Pattern pTagBegin = Pattern.compile("<"+args[0]+".*?>");
-        Pattern pTagEnd = Pattern.compile("</"+args[0]+">");
-        Matcher tagBegin = pTagBegin.matcher(textFromFile);
-        Matcher tagEnd = pTagEnd.matcher(textFromFile);
-
-        int count = 0;
-        while (tagBegin.find()) {
-            while (tagEnd.find()) {
-                String s = textFromFile.substring(tagBegin.end(), tagEnd.end());
-                Matcher inside = pTagBegin.matcher(s);
-                while (inside.find()) count++;
+        while (tag1.find()) {
+            if (tag1.group().startsWith("<" + tagName)) {
+                int count = 0;
+                Matcher tag2 = pattern.matcher(text.substring(tag1.end()));
+                while (tag2.find()) {
+                    if (tag2.group().startsWith("<" + tagName)) count++;
+                    if (tag2.group().startsWith("</") && count > 0) count--;
+                    if (count == 0) {
+                        System.out.println(text.substring(tag1.start(), tag1.end()+tag2.end()));
+                        break;
+                    }
+                }
             }
         }
-
-        System.out.println(count);
-/*
-        for (String tag : tags) {
-            System.out.println(tag);
-        }
-*/
     }
 }

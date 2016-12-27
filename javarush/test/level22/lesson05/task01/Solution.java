@@ -10,10 +10,21 @@ package com.javarush.test.level22.lesson05.task01;
 Метод main не участвует в тестировании.
 */
 public class Solution {
-    public static String getPartOfString(String string) {
-        return null;
+    public static void main(String[] args) throws TooShortStringException {
+        System.out.println(getPartOfString("JavaRush - лучший сервис обучения Java."));
+    }
+    public static String getPartOfString(String string) throws TooShortStringException {
+        if (string == null) throw new TooShortStringException();
+        StringBuilder result = new StringBuilder();
+        String[] splitedString = string.split("\\s");
+        if (splitedString.length < 5) throw new TooShortStringException();
+        for (int i = 1; i < 5; i++) {
+            result.append(splitedString[i]);
+            if (i < 4) result.append(" ");
+        }
+        return result.toString();
     }
 
-    public static class TooShortStringException {
+    public static class TooShortStringException extends Exception{
     }
 }

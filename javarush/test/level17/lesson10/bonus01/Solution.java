@@ -37,24 +37,13 @@ public class Solution {
         allPeople.add(Person.createMale("Петров Петр", new Date()));  //сегодня родился    id=1
     }
 
-    public static void main(String[] args) throws ParseException {
+    public static void main(String[] args) {
         //start here - начни тут
-        String myArgs = "-c Шевцов м 15/06/1985".replaceAll("\\s{2,}", " ").trim();
-        args = myArgs.split(" ");
+//        args = "-i 0".replaceAll("\\s{2,}", " ").trim().split(" ");
         if (args.length == 0) {
-            System.out.println("Программа запускается с одним из следующих наборов параметров:");
-            System.out.println("-c name sex bd");
-            System.out.println("-u id name sex bd");
-            System.out.println("-d id");
-            System.out.println("-i id");
+            System.out.println("Неверные параметры!");
             return;
         }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/mm/yyyy", Locale.ENGLISH);
-        Date date = dateFormat.parse("15/06/1985");
-        System.out.println(dateFormat.format(date));
-        dateFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH);
-        System.out.println(dateFormat.format(date));
-/*
         switch (args[0]) {
             case "-c":
                 create(args);
@@ -69,8 +58,123 @@ public class Solution {
                 info(args);
                 break;
             default:
-                System.out.println("Неверный параметр:" + args[0]);
+                System.out.println("Неверный параметр: " + args[0]);
         }
-*/
+    }
+
+    private static void create(String[] args) {
+        if (args.length != 4) {
+            System.out.println("Неверное число параметров!");
+            return;
+        }
+        String name = args[1];
+        String sex = args[2].toLowerCase();
+        Date bd;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+        // Проверяем указанный пол
+        if (!sex.equals("м") && !sex.equals("ж")) {
+            System.out.println("неверный параметр: " + args[2]);
+            return;
+        }
+        // Проверяем указанную дату рождения
+        try {
+            bd = dateFormat.parse(args[3]);
+        } catch (ParseException e) {
+            System.out.println("Неверный формат даты: " + args[3]);
+            System.out.println("Ожидаемый формат - дд/мм/гггг");
+            return;
+        }
+        // Добавляем в базу нового человека
+        if (args[2].equals("м")) allPeople.add(Person.createMale(name, bd));
+        else allPeople.add(Person.createFemale(name, bd));
+        System.out.println(allPeople.size()-1);
+    }
+    private static void update(String[] args) {
+        if (args.length != 5) {
+            System.out.println("Неверное число параметров!");
+            return;
+        }
+        int id;
+        String name = args[2];
+        String sex = args[3].toLowerCase();
+        Date bd;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+        // Проверяем указанный id
+        try {
+            id = Integer.parseInt(args[1]);
+        } catch (NumberFormatException e) {
+            System.out.println("неверный параметр: " + args[1]);
+            return;
+        }
+        if (id > (allPeople.size()-1) || id < 0) {
+            System.out.println("Человека с указанным id нет в базе данных! (id:" + id + ")");
+            return;
+        }
+        // Проверяем указанный пол
+        if (!sex.equals("м") && !sex.equals("ж")) {
+            System.out.println("неверный параметр: " + args[2]);
+            return;
+        }
+        // Проверяем указанную дату рождения
+        try {
+            bd = dateFormat.parse(args[4]);
+        } catch (ParseException e) {
+            System.out.println("Неверный формат даты: " + args[4]);
+            System.out.println("Ожидаемый формат - дд/мм/гггг");
+            return;
+        }
+        allPeople.get(id).setName(name);
+        if (sex.equals("м")) allPeople.get(id).setSex(Sex.MALE);
+        else allPeople.get(id).setSex(Sex.FEMALE);
+        allPeople.get(id).setBirthDay(bd);
+    }
+    private static void delete(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Неверное число параметров!");
+            return;
+        }
+        int id;
+        // Проверяем указанный id
+        try {
+            id = Integer.parseInt(args[1]);
+        } catch (NumberFormatException e) {
+            System.out.println("неверный параметр: " + args[1]);
+            return;
+        }
+        if (id > (allPeople.size()-1) || id < 0) {
+            System.out.println("Человека с указанным id нет в базе данных! (id:" + id + ")");
+            return;
+        }
+        allPeople.get(id).setName(null);
+        allPeople.get(id).setSex(null);
+        allPeople.get(id).setBirthDay(null);
+    }
+    private static void info(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Неверное число параметров!");
+            return;
+        }
+        int id;
+        String name;
+        String sex;
+        Date bd;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH);
+        // Проверяем указанный id
+        try {
+            id = Integer.parseInt(args[1]);
+        } catch (NumberFormatException e) {
+            System.out.println("неверный параметр: " + args[1]);
+            return;
+        }
+        if (id > (allPeople.size()-1) || id < 0) {
+            System.out.println("Человека с указанным id нет в базе данных! (id:" + id + ")");
+            return;
+        }
+        // Получаем данные по указанному id
+        name = allPeople.get(id).getName();
+        sex = allPeople.get(id).getSex().equals(Sex.MALE) ? "м" : "ж";
+        bd = allPeople.get(id).getBirthDay();
+        // Выводим информацию на экран
+        System.out.println(String.format("%s %s %s", name, sex, dateFormat.format(bd)));
     }
 }

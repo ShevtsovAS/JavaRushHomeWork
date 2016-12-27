@@ -18,7 +18,7 @@ public class Solution {
                 {'f', 'd', 'e', 'r', 'l', 'k'},
                 {'u', 's', 'a', 'm', 'e', 'o'},
                 {'l', 'n', 'g', 'r', 'o', 'v'},
-                {'m', 'l', 'p', 'r', 'r', 'h'},
+                {'m', 'l', 'e', 'm', 'o', 'h'},
                 {'p', 'o', 'e', 'e', 'j', 'j'}
         };
         for (Word word : detectAllWords(crossword, "home", "same", "eejj", "sf", "vok", "glp", "df")) {
@@ -44,8 +44,13 @@ same - (1, 1) - (4, 1)
                             current.setEndPoint(x,y);
                             continue outer;
                         }
-                        for (int direction = 0; direction < 8; direction++)
-                            if (endPointFound(crossword, current, direction)) list.add(current);
+                        for (int direction = 0; direction < 8; direction++) {
+                            if (endPointFound(crossword, current, direction)) {
+                                list.add(current);
+                                current = new Word(word);
+                                current.setStartPoint(x, y);
+                            }
+                        }
                     }
                 }
             }

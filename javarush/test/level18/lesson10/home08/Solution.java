@@ -13,18 +13,12 @@ import java.util.Map;
 */
 
 public class Solution {
-    public static Map<String, Integer> resultMap = new HashMap<>();
+    public static volatile Map<String, Integer> resultMap = new HashMap<String, Integer>();
 
     public static void main(String[] args) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        String key;
-        while (!(key = reader.readLine()).equals("exit")) {
-            try {
-                new ReadThread(key).start();
-            } catch (Exception e) {
-                System.out.println(e);
-            }
-        }
+        String fileName;
+        while (!(fileName = reader.readLine()).equals("exit")) new ReadThread(fileName).start();
         reader.close();
 /*
         for (Map.Entry<String, Integer> entry : resultMap.entrySet()) {
@@ -34,37 +28,36 @@ public class Solution {
     }
 
     public static class ReadThread extends Thread {
-        String fileName;
+        private String fileName;
         public ReadThread(String fileName) {
             //implement constructor body
             this.fileName = fileName;
         }
         // implement file reading here - реализуйте чтение из файла тут
+
         @Override
         public void run() {
             try {
                 FileInputStream file = new FileInputStream(fileName);
-                byte[] buffer = new byte[file.available()];
-                file.read(buffer);
-                file.close();
-
-                Map<Byte, Integer> bytes = new HashMap<>();
-                int max = 1;
-                for (byte b : buffer) {
-                    if (bytes.containsKey(b)) {
-                        int count = bytes.get(b);
-                        bytes.put(b, ++count);
-                        if (count > max) max = count;
+                Map<Integer, Integer> bytesMap = new HashMap<>();
+                int current, max = 0;
+                while (file.available() > 0) {
+                    current = file.read();
+                    if (bytesMap.containsKey(current)) {
+                        int count = bytesMap.get(current) + 1;
+                        bytesMap.put(current, count);
+                        if (max < count) max = count;
                     }
-                    else bytes.put(b, 1);
+                    else bytesMap.put(current, 1);
                 }
-
-                for (Map.Entry<Byte, Integer> entry : bytes.entrySet()) {
-                    int value = entry.getValue();
-                    int searchedByte = entry.getKey();
-                    if (value == max) {
-                        resultMap.put(fileName, searchedByte);
-                        break;
+                file.close();
+                synchronized (resultMap) {
+                    if (max == 0) resultMap.put(fileName, 0);
+                    else {
+                        for (Map.Entry<Integer, Integer> entry : bytesMap.entrySet()) {
+                            int value = entry.getValue();
+                            if (value == max) resultMap.put(fileName, entry.getKey());
+                        }
                     }
                 }
             } catch (IOException e) {
