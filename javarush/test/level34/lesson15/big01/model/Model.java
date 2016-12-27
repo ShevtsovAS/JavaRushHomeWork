@@ -12,7 +12,7 @@ public class Model {
     private EventListener eventListener;
     private GameObjects gameObjects;
     private int currentLevel = 1;
-    private File levelFile = new File("src/com/javarush/test/level34/lesson15/big01/res/levels.txt"); // для прохождения теста
+    private File levelFile = new File("src/com/javarush/test/level34/lesson15/big01/res/levels.txt");
     private LevelLoader levelLoader = new LevelLoader(Paths.get(levelFile.getAbsolutePath()));
 
     public void setEventListener(EventListener eventListener) {
