@@ -13,12 +13,15 @@ public class Solution {
         Counter counter4 = new Counter();
 
         counter1.start();
+        counter1.join();
         counter2.start();
+        counter2.join();
         counter3.start();
+        counter3.join();
         counter4.start();
-
+        counter4.join();
         for (int i = 1; i <= 100; i++) {
-            System.out.println(i+":"+values[i]);
+            System.out.println(i + ":" + values[i]);
             if (values[i] != 1) {
                 System.out.println("Массив values содержит элементы неравные 1");
                 break;
@@ -47,7 +50,7 @@ public class Solution {
         @Override
         public void run() {
             do {
-                synchronized (this) {
+                synchronized (values) {
                     incrementCount();
                     values[getCount()]++;
                 }
