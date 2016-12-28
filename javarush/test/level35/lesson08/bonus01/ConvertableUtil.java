@@ -7,7 +7,7 @@ import java.util.Map;
 public class ConvertableUtil {
 
     public static Map convert(List<? extends Convertable> list) {
-        Map<Object, Convertable<?>> result = new HashMap();
+        Map<Object, Convertable<?>> result = new HashMap<>();
         for (Convertable<?> convertable : list) {
             result.put(convertable.getKey(), convertable);
         }
