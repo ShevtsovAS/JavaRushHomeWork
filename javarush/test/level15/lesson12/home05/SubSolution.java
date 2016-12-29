@@ -1,51 +1,29 @@
 package com.javarush.test.level15.lesson12.home05;
 
-/**
- * Created by SAS on 26.03.2016.
- */
+import java.math.BigDecimal;
+
 public class SubSolution extends Solution {
-    SubSolution(int n) {
-        super(n);
-    }
+    public SubSolution() {}
 
-    SubSolution(Short s) {
-        super(s);
-    }
+    public SubSolution(int s) { super(s); }
 
-    SubSolution(boolean b) {
-        super(b);
-    }
+    public SubSolution(short s) { super(s); }
 
-    protected SubSolution(String s) {
-        super(s);
-    }
+    protected SubSolution(Integer s) { super(s); }
 
-    protected SubSolution(byte b) {
-        super(b);
-    }
+    protected SubSolution(Double s) { super(s); }
 
-    protected SubSolution(char c) {
-        super(c);
-    }
+    protected SubSolution(double s) { super(s); }
 
-    public SubSolution(Integer n) {
-        super(n);
-    }
+    private SubSolution (byte s) {}
 
-    public SubSolution(Float f) {
-        super(f);
-    }
+    private SubSolution (long s) {}
 
-    public SubSolution(Double d) {
-        super(d);
-    }
-    private SubSolution (long l) {
-        super((byte) l);
-    }
-    private SubSolution (Boolean b) {
-        super(b);
-    }
-    private SubSolution (short s) {
-        super(s);
-    }
+    private SubSolution (float s) {}
+
+    SubSolution(BigDecimal s) { super(s); }
+
+    SubSolution(Float s) { super(s); }
+
+    SubSolution(Object s) { super(s); }
 }
