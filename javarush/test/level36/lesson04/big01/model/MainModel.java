@@ -1,7 +1,5 @@
 package com.javarush.test.level36.lesson04.big01.model;
 
-import com.javarush.test.level36.lesson04.big01.model.Model;
-import com.javarush.test.level36.lesson04.big01.model.ModelData;
 import com.javarush.test.level36.lesson04.big01.model.service.UserService;
 import com.javarush.test.level36.lesson04.big01.model.service.UserServiceImpl;
 
@@ -21,5 +19,10 @@ public class MainModel implements Model {
     @Override
     public void loadUsers() {
         modelData.setUsers(userService.getUsersBetweenLevels(1, 100));
+    }
+
+    @Override
+    public void loadDeletedUsers() {
+        modelData.setUsers(userService.getAllDeletedUsers());
     }
 }
