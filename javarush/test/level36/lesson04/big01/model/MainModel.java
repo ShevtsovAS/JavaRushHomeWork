@@ -4,6 +4,8 @@ import com.javarush.test.level36.lesson04.big01.bean.User;
 import com.javarush.test.level36.lesson04.big01.model.service.UserService;
 import com.javarush.test.level36.lesson04.big01.model.service.UserServiceImpl;
 
+import java.util.List;
+
 
 /**
  * Created by sas on 29.12.16.
@@ -19,19 +21,31 @@ public class MainModel implements Model {
 
     @Override
     public void loadUsers() {
-        modelData.setUsers(userService.getUsersBetweenLevels(1, 100));
         modelData.setDisplayDeletedUserList(false);
+        modelData.setUsers(getActiveUsers(userService.getUsersBetweenLevels(1, 100)));
     }
 
     @Override
     public void loadDeletedUsers() {
-        modelData.setUsers(userService.getAllDeletedUsers());
         modelData.setDisplayDeletedUserList(true);
+        List<User> users = userService.getAllDeletedUsers();
+        modelData.setUsers(users);
     }
 
     @Override
     public void loadUserById(long userId) {
         User user = userService.getUsersById(userId);
         modelData.setActiveUser(user);
+    }
+
+    @Override
+    public void deleteUserById(long id) {
+        modelData.setActiveUser(userService.deleteUser(id));
+        modelData.setDisplayDeletedUserList(false);
+        modelData.setUsers(getActiveUsers(userService.getUsersBetweenLevels(1, 100)));
+    }
+
+    private List<User> getActiveUsers(List<User> userList){
+        return userService.filterOnlyActiveUsers(userList);
     }
 }
