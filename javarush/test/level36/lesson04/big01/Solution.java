@@ -27,5 +27,7 @@ public class Solution {
         usersView.fireEventOpenUserEditForm(126);
 
         editUserView.fireEventUserDeleted(124);
+
+        editUserView.fireEventUserChanged("Shevtsov", 125, 36);
     }
 }
