@@ -1,5 +1,6 @@
 package com.javarush.test.level39.lesson09.big01;
 
+import com.javarush.test.level39.lesson09.big01.query.DateQuery;
 import com.javarush.test.level39.lesson09.big01.query.IPQuery;
 import com.javarush.test.level39.lesson09.big01.query.UserQuery;
 
@@ -13,7 +14,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class LogParser implements IPQuery, UserQuery {
+public class LogParser implements IPQuery, UserQuery, DateQuery {
     private Path logDir;
     private List<String> fileLines;
 
@@ -312,5 +313,125 @@ public class LogParser implements IPQuery, UserQuery {
         }
 
         return users;
+    }
+
+    @Override
+    public Set<Date> getDatesForUserAndEvent(String user, Event event, Date after, Date before) {
+        Set<Date> dates = new HashSet<>();
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            String currentUser = columns[1];
+            Date date = getDate(columns[2]);
+            Event currentEvent = getEvent(columns[3]);
+
+            if (currentUser.equals(user) && currentEvent.equals(event) && isMatchesToDate(date, after, before)) dates.add(date);
+        }
+
+        return dates;
+    }
+
+    @Override
+    public Set<Date> getDatesWhenSomethingFailed(Date after, Date before) {
+        return getDatesForStatus(Status.FAILED, after, before);
+    }
+
+    @Override
+    public Set<Date> getDatesWhenErrorHappened(Date after, Date before) {
+        return getDatesForStatus(Status.ERROR, after, before);
+    }
+
+    @Override
+    public Date getDateWhenUserLoggedFirstTime(String user, Date after, Date before) {
+        Date logedFirstTimeDate = null;
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            String currentUser = columns[1];
+            Date date = getDate(columns[2]);
+            Event event = getEvent(columns[3]);
+
+            if (currentUser.equals(user) && event.equals(Event.LOGIN) && isMatchesToDate(date, after, before)) {
+                if (logedFirstTimeDate == null) logedFirstTimeDate = date;
+                else if (logedFirstTimeDate.getTime() > date.getTime()) logedFirstTimeDate = date;
+            }
+        }
+
+        return logedFirstTimeDate;
+    }
+
+    @Override
+    public Date getDateWhenUserSolvedTask(String user, int task, Date after, Date before) {
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            String currentUser = columns[1];
+            Date date = getDate(columns[2]);
+            Event event = getEvent(columns[3]);
+
+            if (currentUser.equals(user) && isMatchesToDate(date, after, before)) {
+                if (event.equals(Event.SOLVE_TASK)) {
+                    int currentTask = Integer.parseInt(columns[3].split("\\s")[1]);
+                    if (currentTask == task) return date;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Date getDateWhenUserDoneTask(String user, int task, Date after, Date before) {
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            String currentUser = columns[1];
+            Date date = getDate(columns[2]);
+            Event event = getEvent(columns[3]);
+
+            if (currentUser.equals(user) && isMatchesToDate(date, after, before)) {
+                if (event.equals(Event.DONE_TASK)) {
+                    int currentTask = Integer.parseInt(columns[3].split("\\s")[1]);
+                    if (currentTask == task) return date;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Set<Date> getDatesWhenUserWroteMessage(String user, Date after, Date before) {
+        return getDatesForUserAndEvent(user, Event.WRITE_MESSAGE, after, before);
+    }
+
+    @Override
+    public Set<Date> getDatesWhenUserDownloadedPlugin(String user, Date after, Date before) {
+        return getDatesForUserAndEvent(user, Event.DOWNLOAD_PLUGIN, after, before);
+    }
+
+    private Set<Date> getDatesForStatus(Status status, Date after, Date before) {
+        Set<Date> dates = new HashSet<>();
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            Status currentStatus = Status.valueOf(columns[4]);
+            Date date = getDate(columns[2]);
+
+            if (currentStatus.equals(status) && isMatchesToDate(date, after, before)) dates.add(date);
+        }
+
+        return dates;
     }
 }
