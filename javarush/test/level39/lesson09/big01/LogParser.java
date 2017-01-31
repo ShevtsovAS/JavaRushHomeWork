@@ -1,6 +1,7 @@
 package com.javarush.test.level39.lesson09.big01;
 
 import com.javarush.test.level39.lesson09.big01.query.DateQuery;
+import com.javarush.test.level39.lesson09.big01.query.EventQuery;
 import com.javarush.test.level39.lesson09.big01.query.IPQuery;
 import com.javarush.test.level39.lesson09.big01.query.UserQuery;
 
@@ -14,7 +15,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class LogParser implements IPQuery, UserQuery, DateQuery {
+public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery {
     private Path logDir;
     private List<String> fileLines;
 
@@ -131,32 +132,6 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
         }
 
         return ips;
-    }
-
-    private Date getDate(String part) {
-        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.ENGLISH);
-        Date date = null;
-        try
-        {
-            date = dateFormat.parse(part);
-        }
-        catch (ParseException e)
-        {
-            e.printStackTrace();
-        }
-        return date;
-    }
-
-    private boolean isMatchesToDate(Date date, Date after, Date before) {
-        if (date == null) return false;
-        if (after != null && date.getTime() < after.getTime()) return false;
-        if (before != null && date.getTime() > before.getTime()) return false;
-        return true;
-    }
-
-    private Event getEvent(String s) {
-        if (s.startsWith("SOLVE_TASK") || s.startsWith("DONE_TASK")) return Event.valueOf(s.split("\\s")[0]);
-        return Event.valueOf(s);
     }
 
     @Override
@@ -297,24 +272,6 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
         return users;
     }
 
-    private Set<String> getUsersForEvent(Event event, Date after, Date before) {
-        Set<String> users = new HashSet<>();
-
-        for (String line : fileLines) {
-            String[] columns = line.trim().split("\\t");
-
-            if (columns.length < 5) continue;
-
-            String user = columns[1];
-            Date date = getDate(columns[2]);
-            Event currentEvent = getEvent(columns[3]);
-
-            if (currentEvent == event && isMatchesToDate(date, after, before)) users.add(user);
-        }
-
-        return users;
-    }
-
     @Override
     public Set<Date> getDatesForUserAndEvent(String user, Event event, Date after, Date before) {
         Set<Date> dates = new HashSet<>();
@@ -418,6 +375,183 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
         return getDatesForUserAndEvent(user, Event.DOWNLOAD_PLUGIN, after, before);
     }
 
+    @Override
+    public int getNumberOfAllEvents(Date after, Date before) {
+        return getAllEvents(after, before).size();
+    }
+
+    @Override
+    public Set<Event> getAllEvents(Date after, Date before) {
+        Set<Event> events = new HashSet<>();
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            Date date = getDate(columns[2]);
+            Event event = getEvent(columns[3]);
+
+            if (isMatchesToDate(date, after, before)) events.add(event);
+        }
+
+        return events;
+    }
+
+    @Override
+    public Set<Event> getEventsForIP(String ip, Date after, Date before) {
+        Set<Event> events = new HashSet<>();
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            String currentIp = columns[0];
+            Date date = getDate(columns[2]);
+            Event event = getEvent(columns[3]);
+
+            if (currentIp.equals(ip) && isMatchesToDate(date, after, before)) {
+                events.add(event);
+            }
+        }
+
+        return events;
+    }
+
+    @Override
+    public Set<Event> getEventsForUser(String user, Date after, Date before) {
+        Set<Event> events = new HashSet<>();
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            String currentUser = columns[1];
+            Date date = getDate(columns[2]);
+            Event event = getEvent(columns[3]);
+
+            if (currentUser.equals(user) && isMatchesToDate(date, after, before)) {
+                events.add(event);
+            }
+        }
+
+        return events;
+    }
+
+    @Override
+    public Set<Event> getFailedEvents(Date after, Date before) {
+        return getEventsForStatus(Status.FAILED, after, before);
+    }
+
+    @Override
+    public Set<Event> getErrorEvents(Date after, Date before) {
+        return getEventsForStatus(Status.ERROR, after, before);
+    }
+
+    @Override
+    public int getNumberOfAttemptToSolveTask(int task, Date after, Date before) {
+        Map<Integer, Integer> solvedTasks = getAllSolvedTasksAndTheirNumber(after, before);
+        if (solvedTasks != null && solvedTasks.containsKey(task)) return solvedTasks.get(task);
+        else return 0;
+    }
+
+    @Override
+    public int getNumberOfSuccessfulAttemptToSolveTask(int task, Date after, Date before) {
+        Map<Integer, Integer> doneTasks = getAllDoneTasksAndTheirNumber(after, before);
+        if (doneTasks != null && doneTasks.containsKey(task)) return doneTasks.get(task);
+        else return 0;
+    }
+
+    @Override
+    public Map<Integer, Integer> getAllSolvedTasksAndTheirNumber(Date after, Date before) {
+        Map<Integer, Integer> solvedTasks = new HashMap<>();
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            Date date = getDate(columns[2]);
+            Event event = getEvent(columns[3]);
+
+            if (event.equals(Event.SOLVE_TASK) && isMatchesToDate(date, after, before)) {
+                int task = Integer.parseInt(columns[3].split("\\s")[1]);
+                if (!solvedTasks.containsKey(task)) solvedTasks.put(task, 1);
+                else solvedTasks.put(task, solvedTasks.get(task) + 1);
+            }
+        }
+
+        return solvedTasks;
+    }
+
+    @Override
+    public Map<Integer, Integer> getAllDoneTasksAndTheirNumber(Date after, Date before) {
+        Map<Integer, Integer> solvedTasks = new HashMap<>();
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            Date date = getDate(columns[2]);
+            Event event = getEvent(columns[3]);
+
+            if (event.equals(Event.DONE_TASK) && isMatchesToDate(date, after, before)) {
+                int task = Integer.parseInt(columns[3].split("\\s")[1]);
+                if (!solvedTasks.containsKey(task)) solvedTasks.put(task, 1);
+                else solvedTasks.put(task, solvedTasks.get(task) + 1);
+            }
+        }
+
+        return solvedTasks;
+    }
+
+    private Date getDate(String part) {
+        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.ENGLISH);
+        Date date = null;
+        try
+        {
+            date = dateFormat.parse(part);
+        }
+        catch (ParseException e)
+        {
+            e.printStackTrace();
+        }
+        return date;
+    }
+
+    private boolean isMatchesToDate(Date date, Date after, Date before) {
+        if (date == null) return false;
+        if (after != null && date.getTime() < after.getTime()) return false;
+        if (before != null && date.getTime() > before.getTime()) return false;
+        return true;
+    }
+
+    private Event getEvent(String s) {
+        if (s.startsWith("SOLVE_TASK") || s.startsWith("DONE_TASK")) return Event.valueOf(s.split("\\s")[0]);
+        return Event.valueOf(s);
+    }
+
+    private Set<String> getUsersForEvent(Event event, Date after, Date before) {
+        Set<String> users = new HashSet<>();
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            String user = columns[1];
+            Date date = getDate(columns[2]);
+            Event currentEvent = getEvent(columns[3]);
+
+            if (currentEvent == event && isMatchesToDate(date, after, before)) users.add(user);
+        }
+
+        return users;
+    }
+
     private Set<Date> getDatesForStatus(Status status, Date after, Date before) {
         Set<Date> dates = new HashSet<>();
 
@@ -433,5 +567,25 @@ public class LogParser implements IPQuery, UserQuery, DateQuery {
         }
 
         return dates;
+    }
+
+    private Set<Event> getEventsForStatus(Status status, Date after, Date before) {
+        Set<Event> events = new HashSet<>();
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            Date date = getDate(columns[2]);
+            Event event = getEvent(columns[3]);
+            Status currentStatus = Status.valueOf(columns[4]);
+
+            if (currentStatus.equals(status) && isMatchesToDate(date, after, before)) {
+                events.add(event);
+            }
+        }
+
+        return events;
     }
 }
