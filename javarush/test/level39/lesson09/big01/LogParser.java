@@ -1,9 +1,6 @@
 package com.javarush.test.level39.lesson09.big01;
 
-import com.javarush.test.level39.lesson09.big01.query.DateQuery;
-import com.javarush.test.level39.lesson09.big01.query.EventQuery;
-import com.javarush.test.level39.lesson09.big01.query.IPQuery;
-import com.javarush.test.level39.lesson09.big01.query.UserQuery;
+import com.javarush.test.level39.lesson09.big01.query.*;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -15,7 +12,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery {
+public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQuery {
     private Path logDir;
     private List<String> fileLines;
 
@@ -508,6 +505,20 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery {
         return solvedTasks;
     }
 
+    @Override
+    public Set<Object> execute(String query) {
+        Set<Object> objects = new HashSet<>();
+
+        switch (query) {
+            case "get ip": objects.addAll(getUniqueIPs(null, null)); break;
+            case "get user": objects.addAll(getAllUsers()); break;
+            case "get date": objects.addAll(getAllDates()); break;
+            case "get event": objects.addAll(getAllEvents(null, null)); break;
+            case "get status": objects.addAll(getAllStatus()); break;
+        }
+        return objects;
+    }
+
     private Date getDate(String part) {
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.ENGLISH);
         Date date = null;
@@ -587,5 +598,32 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery {
         }
 
         return events;
+    }
+
+    private Set<Date> getAllDates() {
+        Set<Date> dates = new HashSet<>();
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            dates.add(getDate(columns[2]));
+        }
+        return dates;
+    }
+
+    private Set<Status> getAllStatus() {
+        Set<Status> statuses = new HashSet<>();
+
+        for (String line : fileLines) {
+            String[] columns = line.trim().split("\\t");
+
+            if (columns.length < 5) continue;
+
+            statuses.add(Status.valueOf(columns[4]));
+        }
+
+        return statuses;
     }
 }

@@ -7,6 +7,6 @@ public class Solution {
     public static void main(String[] args) {
         LogParser logParser = new LogParser(Paths.get("src/com/javarush/test/level39/lesson09/big01/logs/"));
 //        System.out.println(logParser.getLoggedUsers(null, null));
-        System.out.println(logParser.getAllDoneTasksAndTheirNumber(null, null));
+        System.out.println(logParser.execute("get status"));
     }
 }
