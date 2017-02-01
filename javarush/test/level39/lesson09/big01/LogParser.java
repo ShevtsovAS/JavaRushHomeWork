@@ -525,12 +525,15 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         }
 
         String[] vars = query.split("\\s");
-        String field1 = "";
-        String field2 = "";
-        String value1;
+        String field1 = null;
+        String field2 = null;
+        String value1 = null;
+        String value2 = null;
+        String value3 = null;
 
         if (vars.length >= 2) field1 = vars[1];
         if (vars.length >= 6) field2 = vars[3];
+
 
         List<String> values = new ArrayList<>();
         Pattern valuePattern = Pattern.compile("\".+?\"");
@@ -538,28 +541,25 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
 
         while (valueMatcher.find()) values.add(valueMatcher.group().replaceAll("\"", ""));
 
-        if (values.isEmpty()) {
-            System.out.println("Query is invalid!");
-            return null;
-        }
-
-        value1 = values.get(0);
+        if (values.size() > 0) value1 = values.get(0);
+        if (values.size() > 1) value2 = values.get(1);
+        if (values.size() > 2) value3 = values.get(2);
 
         if (field1.equals("ip")) {
             switch (field2) {
                 case "user":
-                    objects.addAll(getIPsForUser(value1, null, null));
+                    objects.addAll(getIPsForUser(value1, getDate(value2), getDate(value3)));
                     break;
                 case "date":
                     Date date = getDate(value1);
                     objects.addAll(getUniqueIPs(date, date));
                     break;
                 case "event":
-                    objects.addAll(getIPsForEvent(getEvent(value1), null, null));
+                    objects.addAll(getIPsForEvent(getEvent(value1), getDate(value2), getDate(value3)));
                     break;
                 case "status":
                     Status status = Status.valueOf(value1);
-                    objects.addAll(getIPsForStatus(status, null, null));
+                    objects.addAll(getIPsForStatus(status, getDate(value2), getDate(value3)));
                     break;
             }
         }
@@ -567,7 +567,7 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         if (field1.equals("user")) {
             switch (field2) {
                 case "ip":
-                    objects.addAll(getUsersForIP(value1, null, null));
+                    objects.addAll(getUsersForIP(value1, getDate(value2), getDate(value3)));
                     break;
                 case "date":
                     Date date = getDate(value1);
@@ -575,11 +575,11 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
                     break;
                 case "event":
                     Event event = getEvent(value1);
-                    objects.addAll(getUsersForEvent(event, null, null));
+                    objects.addAll(getUsersForEvent(event, getDate(value2), getDate(value3)));
                     break;
                 case "status":
                     Status status = Status.valueOf(value1);
-                    objects.addAll(getUsersForStatus(status));
+                    objects.addAll(getUsersForStatus(status, getDate(value2), getDate(value3)));
                     break;
             }
         }
@@ -587,46 +587,46 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         if (field1.equals("date")) {
             switch (field2) {
                 case "ip":
-                    objects.addAll(getDatesForIp(value1));
+                    objects.addAll(getDatesForIp(value1, getDate(value2), getDate(value3)));
                     break;
                 case "user":
                     Event[] events = Event.values();
                     for (Event event : events) {
-                        objects.addAll(getDatesForUserAndEvent(value1, event, null, null));
+                        objects.addAll(getDatesForUserAndEvent(value1, event, getDate(value2), getDate(value3)));
                     }
                     break;
                 case "event":
                     Set<String> users = getAllUsers();
                     Event event = getEvent(value1);
                     for (String user : users) {
-                        objects.addAll(getDatesForUserAndEvent(user, event, null, null));
+                        objects.addAll(getDatesForUserAndEvent(user, event, getDate(value2), getDate(value3)));
                     }
                     break;
                 case "status":
                     Status status = Status.valueOf(value1);
-                    objects.addAll(getDatesForStatus(status, null, null));
+                    objects.addAll(getDatesForStatus(status, getDate(value2), getDate(value3)));
                     break;
             }
         }
 
         if (field1.equals("event")) {
             switch (field2) {
-                case "ip": objects.addAll(getEventsForIP(value1, null, null)); break;
-                case "user": objects.addAll(getEventsForUser(value1, null, null)); break;
+                case "ip": objects.addAll(getEventsForIP(value1, getDate(value2), getDate(value3))); break;
+                case "user": objects.addAll(getEventsForUser(value1, getDate(value2), getDate(value3))); break;
                 case "date":
                     Date date = getDate(value1);
                     objects.addAll(getEventsForDate(date));
                     break;
-                case "status": objects.addAll(getEventsForStatus(Status.valueOf(value1), null, null));
+                case "status": objects.addAll(getEventsForStatus(Status.valueOf(value1), getDate(value2), getDate(value3)));
             }
         }
 
         if (field1.equals("status")) {
             switch (field2) {
-                case "ip": objects.addAll(getStatusesForIp(value1)); break;
-                case "user": objects.addAll(getStatusesForUser(value1)); break;
+                case "ip": objects.addAll(getStatusesForIp(value1, getDate(value2), getDate(value3))); break;
+                case "user": objects.addAll(getStatusesForUser(value1, getDate(value2), getDate(value3))); break;
                 case "date": objects.addAll(getStatusesForDate(getDate(value1))); break;
-                case "event": objects.addAll(getStatusesForEvent(getEvent(value1))); break;
+                case "event": objects.addAll(getStatusesForEvent(getEvent(value1), getDate(value2), getDate(value3))); break;
             }
         }
 
@@ -634,6 +634,7 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
     }
 
     private Date getDate(String part) {
+        if (part == null) return null;
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.ENGLISH);
         Date date = null;
         try
@@ -742,10 +743,10 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
     }
 
     private boolean isQueryValid(String query) {
-        String[] vars = query.split("\\s");
-        if (vars.length == 2) return vars[0].equals("get");
-        if (vars.length >= 6) return vars[0].equals("get") && vars[2].equals("for");
-        return false;
+        Pattern p = Pattern.compile("get (ip|user|date|event|status)"
+                + "( for (ip|user|date|event|status) = \"(.*?)\")?"
+                + "( and date between \"(.*?)\" and \"(.*?)\")?");
+        return p.matcher(query).find();
     }
 
     private Set<String> getUsersForDate(Date date) {
@@ -765,7 +766,7 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         return users;
     }
 
-    private Set<String> getUsersForStatus(Status status) {
+    private Set<String> getUsersForStatus(Status status, Date after, Date before) {
         Set<String> users = new HashSet<>();
 
         for (String line : fileLines) {
@@ -774,15 +775,16 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
             if (columns.length < 5) continue;
 
             String user = columns[1];
+            Date date = getDate(columns[2]);
             Status currentStatus = Status.valueOf(columns[4]);
 
-            if (currentStatus.equals(status)) users.add(user);
+            if (currentStatus.equals(status) && isMatchesToDate(date, after, before)) users.add(user);
         }
 
         return users;
     }
 
-    private Set<Date> getDatesForIp(String ip) {
+    private Set<Date> getDatesForIp(String ip, Date after, Date before) {
         Set<Date> dates = new HashSet<>();
 
         for (String line : fileLines) {
@@ -793,7 +795,7 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
             String currentIp = columns[0];
             Date currentDate = getDate(columns[2]);
 
-            if (currentIp.equals(ip)) dates.add(currentDate);
+            if (currentIp.equals(ip) && isMatchesToDate(currentDate, after, before)) dates.add(currentDate);
         }
 
         return dates;
@@ -816,7 +818,7 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         return events;
     }
 
-    private Set<Status> getStatusesForIp(String ip) {
+    private Set<Status> getStatusesForIp(String ip, Date after, Date before) {
         Set<Status> statuses = new HashSet<>();
 
         for (String line : fileLines) {
@@ -825,15 +827,16 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
             if (columns.length < 5) continue;
 
             String currentIp = columns[0];
+            Date date = getDate(columns[2]);
             Status status = Status.valueOf(columns[4]);
 
-            if (currentIp.equals(ip)) statuses.add(status);
+            if (isMatchesToDate(date, after, before) && currentIp.equals(ip)) statuses.add(status);
         }
 
         return statuses;
     }
 
-    private Set<Status> getStatusesForUser(String user) {
+    private Set<Status> getStatusesForUser(String user, Date after, Date before) {
         Set<Status> statuses = new HashSet<>();
 
         for (String line : fileLines) {
@@ -842,9 +845,10 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
             if (columns.length < 5) continue;
 
             String currentUser = columns[1];
+            Date date = getDate(columns[2]);
             Status status = Status.valueOf(columns[4]);
 
-            if (currentUser.equals(user)) {
+            if (currentUser.equals(user) && isMatchesToDate(date, after, before)) {
                 statuses.add(status);
             }
         }
@@ -869,7 +873,7 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
         return statuses;
     }
 
-    private Set<Status> getStatusesForEvent(Event event) {
+    private Set<Status> getStatusesForEvent(Event event, Date after, Date before) {
         Set<Status> statuses = new HashSet<>();
 
         for (String line : fileLines) {
@@ -877,10 +881,11 @@ public class LogParser implements IPQuery, UserQuery, DateQuery, EventQuery, QLQ
 
             if (columns.length < 5) continue;
 
+            Date date = getDate(columns[2]);
             Event currentEvent = getEvent(columns[3]);
             Status status = Status.valueOf(columns[4]);
 
-            if (currentEvent.equals(event)) statuses.add(status);
+            if (currentEvent.equals(event) && isMatchesToDate(date, after, before)) statuses.add(status);
         }
 
         return statuses;
